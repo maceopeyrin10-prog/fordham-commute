@@ -56,11 +56,32 @@ jobs:
           ROBOT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
         run: |
           if [ -z "$ROBOT_KEY" ]; then
-            echo "The GOOGLE_SERVICE_ACCOUNT repository secret is not set."
+            echo "The GOOGLE_SERVICE_ACCOUNT repository secret is not set,"
+            echo "or it is not spelled exactly that way."
             echo "See the README, section 'Making it run on its own'."
             exit 1
           fi
-          printf '%s' "$ROBOT_KEY" > service_account.json
+
+          # Write it out, stripping a leading byte-order mark if Notepad added
+          # one, since that alone is enough to make it unreadable as JSON.
+          printf '%s' "$ROBOT_KEY" | sed '1s/^\xEF\xBB\xBF//' > service_account.json
+
+          # Report the shape of it, never the contents.
+          echo "secret length : ${#ROBOT_KEY} characters"
+          echo "file written  : $(wc -c < service_account.json) bytes"
+          echo "starts with   : $(head -c 1 service_account.json)"
+
+          python -c "import json,sys; d=json.load(open('service_account.json')); \
+            print('valid JSON, key belongs to:', d.get('client_email')); \
+            sys.exit(0 if d.get('private_key') else 1)" \
+          || {
+            echo ""
+            echo "That secret is not a usable service account key."
+            echo "A good one is about 2,300 characters, starts with {, and ends with }."
+            echo "Open service_account.json in Notepad, press Ctrl+A then Ctrl+C,"
+            echo "and paste the whole thing over the existing secret value."
+            exit 1
+          }
 
       - name: Work out today's train
         run: python commute.py auto
