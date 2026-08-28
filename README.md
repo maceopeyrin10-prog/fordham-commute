@@ -203,9 +203,14 @@ accident.
 
 Right now it only runs when you run it. There are two ways to automate it.
 
-### Option A — your laptop (already set up)
+> **Currently in use: Option B, GitHub Actions.** The local task below exists
+> but is **disabled**, on purpose — two schedulers both firing at 06:00 would
+> race to create the same event and you would get duplicates. Only ever have
+> one of them enabled at a time.
 
-A Windows scheduled task called **Fordham commute** is registered and running.
+### Option A — your laptop (set up, but disabled)
+
+A Windows scheduled task called **Fordham commute** is registered.
 It starts at 06:00 every day and repeats every 10 minutes until 19:00, running
 `commute.py auto` each time. Almost every run does nothing and exits.
 
@@ -281,9 +286,17 @@ So pick one:
 **Recommended: private repo with `*/10`.** Safer default, and the track window
 is 19 minutes wide, so two attempts is usually enough.
 
-**One warning about the Google side.** If you skipped the *PUBLISH APP* step
-above, this will work for exactly 7 days and then start failing with a token
-error. Go back and publish the app.
+**The one thing that will eventually switch itself off.** GitHub disables
+scheduled workflows in a repository that has had **no activity for 60 days**.
+They email you first. Since this repo will happily sit untouched for a whole
+semester, expect this around late October.
+
+To wake it up: open the Actions tab and press the button GitHub shows you, or
+just push any commit — changing a number in `settings.txt` counts. Setting a
+calendar reminder for it is not a bad idea.
+
+If your morning events quietly stop appearing, this is the first thing to
+check, before assuming anything is broken.
 
 ---
 
