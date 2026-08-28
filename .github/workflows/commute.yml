@@ -89,6 +89,11 @@ jobs:
           }
 
       - name: Work out today's train
+        env:
+          # Optional. Only needed if you ever move your calendar address and
+          # home address out of settings.txt. Empty is fine and ignored.
+          COMMUTE_CALENDAR_ID: ${{ secrets.COMMUTE_CALENDAR_ID }}
+          COMMUTE_HOME_ADDRESS: ${{ secrets.COMMUTE_HOME_ADDRESS }}
         run: python commute.py auto
 
       - name: Shred the key again

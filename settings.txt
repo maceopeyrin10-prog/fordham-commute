@@ -52,10 +52,19 @@ ignore_classes_starting_before = 00:00
 ignore_classes_starting_after = 23:59
 
 
-# --- Your calendar ---
+# --- Your calendar and address ---
 
-# Which Google Calendar to read classes from and write the train event to.
+# Which Google Calendar has your classes, and gets the train events.
 calendar_id = maceopeyrin10@gmail.com
+
+# Where you walk from. Only used as the location on the get-ready event.
+home_address = 150 E 57th St, New York, NY
+
+# If you ever want these kept out of the repository, put them in a file
+# called settings.local.txt instead (see settings.local.example.txt) and
+# delete the two lines above. Anything in that file wins, and it is never
+# uploaded. Environment variables COMMUTE_CALENDAR_ID and
+# COMMUTE_HOME_ADDRESS win over both, which is how a server can supply them.
 
 
 # --- Stations (you shouldn't need to touch these) ---

@@ -1,0 +1,14 @@
+# =====================================================
+#  TEMPLATE for settings.local.txt
+#
+#  Copy this file, rename the copy to settings.local.txt,
+#  and put your own details in. The copy stays on your
+#  machine and is never uploaded.
+# =====================================================
+
+# Which Google Calendar has your classes, and gets the train events.
+# Usually the email address of the calendar.
+calendar_id = you@example.com
+
+# Where you walk from. Only used as the location on the get-ready event.
+home_address = 1 Example Street, New York, NY

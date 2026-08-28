@@ -21,6 +21,7 @@ import traindata
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SETTINGS_FILE = os.path.join(HERE, "settings.txt")
+PRIVATE_SETTINGS_FILE = os.path.join(HERE, "settings.local.txt")
 CREDENTIALS_FILE = os.path.join(HERE, "google_credentials.json")
 TOKEN_FILE = os.path.join(HERE, "google_token.json")
 SERVICE_ACCOUNT_FILE = os.path.join(HERE, "service_account.json")
@@ -36,14 +37,34 @@ MARKER_KEY = "fordhamCommute"
 # settings.txt
 # ----------------------------------------------------------------------
 
-def read_settings():
-    settings = {}
-    with open(SETTINGS_FILE, encoding="utf-8") as fh:
+def _read_pairs(path, into):
+    if not os.path.exists(path):
+        return
+    with open(path, encoding="utf-8") as fh:
         for line in fh:
             line = line.split("#", 1)[0].strip()
             if "=" in line:
                 key, value = line.split("=", 1)
-                settings[key.strip()] = value.strip()
+                into[key.strip()] = value.strip()
+
+
+def read_settings():
+    settings = {}
+
+    # settings.txt holds the shared, boring stuff and is safe to publish.
+    _read_pairs(SETTINGS_FILE, settings)
+
+    # settings.local.txt holds your personal details (home address, which
+    # calendar). It is never committed, so the code can live in a public
+    # repository without publishing where you live.
+    _read_pairs(PRIVATE_SETTINGS_FILE, settings)
+
+    # And when this runs on a server there is no local file, so the same
+    # values arrive as environment variables instead.
+    for key, variable in (("calendar_id", "COMMUTE_CALENDAR_ID"),
+                          ("home_address", "COMMUTE_HOME_ADDRESS")):
+        if os.environ.get(variable):
+            settings[key] = os.environ[variable]
 
     def minutes(name):
         try:
@@ -75,6 +96,7 @@ def read_settings():
         "earliest": clock("ignore_classes_starting_before"),
         "latest": clock("ignore_classes_starting_after"),
         "calendar_id": settings.get("calendar_id", "primary"),
+        "home_address": settings.get("home_address", "").strip(),
         "from_station": settings.get("from_station", "Grand Central"),
         "to_station": settings.get("to_station", "Fordham"),
         "tz": ZoneInfo(settings.get("timezone", "America/New_York")),
@@ -391,7 +413,7 @@ def wake_body(plan, settings):
             "to Fordham, arriving " + hhmm(plan["arrive"]) + ".\n\n"
             "For: " + plan["class"]["name"] + " at " + hhmm(plan["class"]["starts"]) + "."
         ),
-        "location": "150 E 57th St, New York, NY",
+        "location": settings["home_address"],
         "start": {"dateTime": plan["alarm"].isoformat(), "timeZone": str(settings["tz"])},
         "end": {"dateTime": plan["leave_home"].isoformat(), "timeZone": str(settings["tz"])},
         "extendedProperties": {"private": {MARKER_KEY: marker_for(plan["day"], "wake")}},

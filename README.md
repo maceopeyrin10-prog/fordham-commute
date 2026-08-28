@@ -77,7 +77,7 @@ never need to touch the code.
 
 | Setting | What it means |
 |---|---|
-| `walk_to_grand_central_minutes` | Your walk from 150 E 57th to Grand Central. |
+| `walk_to_grand_central_minutes` | Your walk from home to Grand Central. |
 | `slack_at_grand_central_minutes` | Breathing room inside the terminal before the train leaves. |
 | `fordham_station_to_seat_minutes` | Fordham platform to sitting in the classroom. |
 | `seated_before_class_minutes` | How early you want to already be sitting down. |
@@ -220,9 +220,9 @@ in the top-level list. You can disable or delete it there.
 To rebuild it from scratch, or change the hours, this is the command:
 
 ```powershell
-$py = "C:\Users\mpeyrin\AppData\Local\Microsoft\WindowsApps\pythonw.exe"
-$script = "C:\Users\mpeyrin\Downloads\fordham-commute\commute.py"
-$action = New-ScheduledTaskAction -Execute $py -Argument "`"$script`" auto" -WorkingDirectory "C:\Users\mpeyrin\Downloads\fordham-commute"
+$py = "C:\Users\YOURNAME\AppData\Local\Microsoft\WindowsApps\pythonw.exe"
+$script = "C:\Users\YOURNAME\Downloads\fordham-commute\commute.py"
+$action = New-ScheduledTaskAction -Execute $py -Argument "`"$script`" auto" -WorkingDirectory "C:\Users\YOURNAME\Downloads\fordham-commute"
 $trigger = New-ScheduledTaskTrigger -Daily -At 6:00am
 $trigger.Repetition = (New-ScheduledTaskTrigger -Once -At 6:00am -RepetitionInterval (New-TimeSpan -Minutes 10) -RepetitionDuration (New-TimeSpan -Hours 13)).Repetition
 $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Minutes 5) -MultipleInstances IgnoreNew

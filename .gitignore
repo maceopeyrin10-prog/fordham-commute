@@ -3,3 +3,4 @@ google_token.json
 gtfs_mnr.zip
 __pycache__/
 service_account.json
+settings.local.txt
