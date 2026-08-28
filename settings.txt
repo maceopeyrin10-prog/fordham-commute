@@ -1,0 +1,65 @@
+# ==========================================================
+#  MY COMMUTE SETTINGS
+#  Change the numbers, save the file, done. No code needed.
+#  Lines starting with # are just notes and are ignored.
+# ==========================================================
+
+# --- Timing rules (all in minutes) ---
+
+# How long it takes you to walk from home to Grand Central.
+walk_to_grand_central_minutes = 16
+
+# Spare time you want to be standing inside Grand Central
+# before your train pulls out. Bigger = more relaxed.
+slack_at_grand_central_minutes = 12
+
+# How long from stepping off the train at Fordham
+# to actually sitting down in the classroom.
+fordham_station_to_seat_minutes = 10
+
+# How early you want to already be seated before class starts.
+seated_before_class_minutes = 20
+
+# How long you need from the alarm going off to being out the door.
+alarm_to_out_the_door_minutes = 45
+
+# How many minutes before your train to START watching for the track.
+# It then re-checks every time it runs, right up to departure, so a
+# late track change gets picked up too.
+# Measured: Grand Central posts the track about 19 minutes before
+# departure, so 35 gives it a comfortable head start.
+track_check_minutes_before_train = 35
+
+
+# Show a separate "Get ready" block on the calendar, from your alarm
+# until you walk out the door. Set to no if you would rather have just
+# the one train event with the alarm as a phone notification.
+show_get_ready_block = yes
+
+
+# --- How it recognises a class ---
+
+# Any calendar event whose LOCATION contains this text counts as a class.
+# All your Fordham class events end in "Rose Hill", so that's the giveaway.
+class_location_contains = Rose Hill
+
+# Ignore any class that starts before this time of day (24h clock).
+# Set to 00:00 to never ignore anything.
+ignore_classes_starting_before = 00:00
+
+# Ignore any class that starts after this time of day (24h clock).
+# Set to 23:59 to include afternoon and evening classes.
+ignore_classes_starting_after = 23:59
+
+
+# --- Your calendar ---
+
+# Which Google Calendar to read classes from and write the train event to.
+calendar_id = maceopeyrin10@gmail.com
+
+
+# --- Stations (you shouldn't need to touch these) ---
+
+from_station = Grand Central
+to_station = Fordham
+timezone = America/New_York
