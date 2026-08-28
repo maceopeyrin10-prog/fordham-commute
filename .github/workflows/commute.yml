@@ -22,15 +22,18 @@ on:
     # GitHub only understands UTC, so the script checks the real local time
     # itself and does nothing if today is not actually a class day.
     #
-    # About 1,700 billed minutes a month, inside the free 2,000 for a
-    # private repo.
+    # Every 5 minutes, offset 2 past, 10:00-22:59 UTC, Monday to Friday.
+    # Roughly 6am-7pm New York time in summer, 5am-6pm in winter.
     #
-    # Deliberately NOT "*/10", which fires on the hour. GitHub's own docs
-    # warn that scheduled runs are most likely to be dropped at the start of
-    # an hour, when their load peaks. On 28 August a "*/10" schedule produced
-    # zero runs in five and a half hours, so these are offset by two minutes
-    # to sit away from the crowd.
-    - cron: "2,12,22,32,42,52 10-22 * * 1-5"
+    # Two deliberate choices:
+    #   * Not "*/5", because that fires on the hour, and GitHub's own docs
+    #     warn scheduled runs are most likely to be dropped when their load
+    #     peaks at the start of an hour. On 28 August a "*/10" schedule
+    #     produced zero runs in five and a half hours.
+    #   * Every 5 rather than every 10, because this repository is public and
+    #     public repositories get unlimited Actions minutes. The track window
+    #     is only 19 minutes wide, so more attempts means more chances.
+    - cron: "2-59/5 10-22 * * 1-5"
 
   # Lets you press a button in the Actions tab to run it right now.
   workflow_dispatch:
