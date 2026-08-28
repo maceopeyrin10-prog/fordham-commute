@@ -204,8 +204,12 @@ def marker_for(day, part):
     return day.isoformat() if part == "train" else day.isoformat() + "/" + part
 
 
-def find_our_event(service, settings, day, part="train"):
-    """One of our own events for `day`, if we already made it."""
+def find_our_events(service, settings, day, part="train"):
+    """
+    Every event of ours for `day`. Normally zero or one, but two schedulers
+    can both look, both see nothing, and both create one, so this returns a
+    list and the caller tidies up any twins.
+    """
     tz = settings["tz"]
     start = dt.datetime.combine(day, dt.time.min, tzinfo=tz)
     response = service.events().list(
@@ -213,9 +217,15 @@ def find_our_event(service, settings, day, part="train"):
         timeMin=start.isoformat(),
         timeMax=(start + dt.timedelta(days=1)).isoformat(),
         singleEvents=True,
+        orderBy="startTime",
         privateExtendedProperty=MARKER_KEY + "=" + marker_for(day, part),
     ).execute()
-    items = response.get("items", [])
+    return response.get("items", [])
+
+
+def find_our_event(service, settings, day, part="train"):
+    """One of our own events for `day`, if we already made it."""
+    items = find_our_events(service, settings, day, part)
     return items[0] if items else None
 
 
@@ -461,16 +471,25 @@ def run(command, day=None):
         return
 
     def put(part, body):
-        already = existing if part == "train" else find_our_event(service, settings, day, part)
-        if already:
-            service.events().update(
-                calendarId=settings["calendar_id"], eventId=already["id"], body=body
-            ).execute()
-        else:
+        mine = find_our_events(service, settings, day, part)
+        if not mine:
             service.events().insert(
                 calendarId=settings["calendar_id"], body=body
             ).execute()
-        return bool(already)
+            return False
+
+        service.events().update(
+            calendarId=settings["calendar_id"], eventId=mine[0]["id"], body=body
+        ).execute()
+
+        # If two schedulers raced and both created one, keep the first and
+        # quietly remove the rest, so duplicates heal themselves.
+        for twin in mine[1:]:
+            service.events().delete(
+                calendarId=settings["calendar_id"], eventId=twin["id"]
+            ).execute()
+            print("Removed a duplicate " + part + " event left by a second run.")
+        return True
 
     updated = put("train", event_body(plan, settings))
 

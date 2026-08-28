@@ -23,9 +23,14 @@ on:
     # itself and does nothing if today is not actually a class day.
     #
     # About 1,700 billed minutes a month, inside the free 2,000 for a
-    # private repo. If you make the repo public, minutes are unlimited and
-    # you can change */10 to */5 for a better chance at the track.
-    - cron: "*/10 10-22 * * 1-5"
+    # private repo.
+    #
+    # Deliberately NOT "*/10", which fires on the hour. GitHub's own docs
+    # warn that scheduled runs are most likely to be dropped at the start of
+    # an hour, when their load peaks. On 28 August a "*/10" schedule produced
+    # zero runs in five and a half hours, so these are offset by two minutes
+    # to sit away from the crowd.
+    - cron: "2,12,22,32,42,52 10-22 * * 1-5"
 
   # Lets you press a button in the Actions tab to run it right now.
   workflow_dispatch:
