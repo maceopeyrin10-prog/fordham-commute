@@ -238,7 +238,55 @@ logged in. On a class morning you leave home at 08:40 and the track is posted
 at about 08:49, by which time the laptop is usually shut — so the track update
 is exactly the part this cannot deliver. That is what Option B is for.
 
-### Option B — GitHub Actions (runs without your laptop)
+### The alarm clock (why Google presses GitHub's button)
+
+**Read this before trusting the schedule.** GitHub runs this workflow perfectly
+when asked directly — every manual run has succeeded, instantly. But GitHub's
+own *scheduler* is throttled hard on free accounts. A cron asking for every 5
+minutes produced **two runs in three days**, and on 31 August the one run of
+the day landed an hour before the track window opened. The track was missed.
+
+Track numbers appear 19 minutes before departure. A scheduler that fires once
+a day cannot catch that, no matter how the cron is written.
+
+So the cron lives on Google instead, in `apps-script-trigger.gs`. Google keeps
+time reliably; GitHub does the work. Your laptop is not involved.
+
+**Setting it up (about 10 minutes, once):**
+
+1. **Make a GitHub token.** github.com → your avatar → **Settings** →
+   **Developer settings** → **Personal access tokens** → **Fine-grained
+   tokens** → **Generate new token**.
+   - Repository access: **Only select repositories** → `fordham-commute`
+   - Permissions → Repository permissions → **Actions**: **Read and write**
+   - Nothing else. Generate, and copy the token.
+
+   That token can start this one workflow in this one repository and do
+   nothing else. Revoke it any time from the same page.
+
+2. **Make the Apps Script.** Go to **script.google.com** → **New project**.
+   Delete the sample code and paste the whole of `apps-script-trigger.gs`.
+
+3. **Store the token.** In the left sidebar: **Project Settings** → scroll to
+   **Script Properties** → **Add script property**.
+   - Property: `GITHUB_TOKEN`
+   - Value: paste the token
+   - **Save script properties**
+
+   Paste it here and nowhere else. Not into a chat, not into the code.
+
+4. **Start the timer.** Back in the editor, choose **installTimer** from the
+   function dropdown and press **Run**. Approve the permission prompt the
+   first time. It installs a 5-minute timer and fires one test press.
+
+5. **Check it worked.** The repository Actions tab should show a fresh
+   `workflow_dispatch` run within a few seconds.
+
+**How to tell it is alive later:** open the train event on your calendar and
+read the last line of the description. It says when it was last checked. On a
+class morning that should be a time within the last few minutes, not days ago.
+
+### Option B — GitHub Actions (the work, not the timing)
 
 Free, and runs on GitHub's computers so your laptop can be shut. The workflow
 is already written: `.github/workflows/commute.yml`.
