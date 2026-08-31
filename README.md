@@ -238,7 +238,45 @@ logged in. On a class morning you leave home at 08:40 and the track is posted
 at about 08:49, by which time the laptop is usually shut — so the track update
 is exactly the part this cannot deliver. That is what Option B is for.
 
-### The alarm clock (why Google presses GitHub's button)
+### Where this actually runs: `commute.gs` on Google
+
+**Set this up and you are done.** About three minutes, no password, no token,
+no key, nothing that expires.
+
+1. Go to **script.google.com** → **New project**
+2. Delete the sample code, paste the whole of **`commute.gs`**
+3. Pick **installTimer** from the function dropdown → **Run** → approve the
+   permission prompt the first time
+
+That is it. It now checks every 5 minutes, on Google's servers, forever. Your
+laptop can be shut, flat, or in another country.
+
+**Why here and not GitHub.** GitHub runs the work reliably when asked directly,
+but its own scheduler throttled a "every 5 minutes" cron down to **two runs in
+three days**. On 31 August the single run of the day landed an hour before the
+track window opened, so the track was missed. A once-a-day scheduler cannot
+catch something that appears 19 minutes before departure.
+
+**Why no credentials.** Apps Script already runs as you, so it can read and
+write your own calendar directly. That removes the service account, the OAuth
+consent screen, the tokens, and every one of the expiry traps that came with
+them.
+
+**How it gets the timetable.** The MTA's file is 19 MB, far too much to chew
+through every five minutes. `build_timetable.py` boils it down to one small
+file per day under `timetable/`, and GitHub rebuilds those once a day — which
+is exactly the job its unreliable scheduler *is* good enough for. If GitHub
+skips a few days nothing breaks; the committed timetable stays valid for weeks.
+
+**To change the timing rules**, edit the constants at the top of `commute.gs`
+in the Apps Script editor and save. `settings.txt` only affects the Python
+version you run by hand.
+
+**To check it is alive:** open the train event and read the last line of the
+description. On a class morning it should say it was checked within the last
+few minutes.
+
+### The old approach: Google presses GitHub's button (not needed any more)
 
 **Read this before trusting the schedule.** GitHub runs this workflow perfectly
 when asked directly — every manual run has succeeded, instantly. But GitHub's

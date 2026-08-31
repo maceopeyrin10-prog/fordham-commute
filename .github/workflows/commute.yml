@@ -1,52 +1,35 @@
-name: Fordham commute
+name: Refresh timetable
 
-# What this does, in plain English:
+# This no longer runs your morning. Apps Script does that, every 5 minutes,
+# on Google's servers -- see commute.gs and the README.
 #
-#   Every 10 minutes during the day it wakes up and asks "anything to do?",
-#   which is almost always no, and stops.
+# The reason is measured, not theoretical: GitHub runs this workflow reliably
+# when asked directly, but its own scheduler throttled a "every 5 minutes"
+# cron down to two runs in three days. On 31 August the single run of the day
+# arrived an hour before the track window opened, and the track was missed.
 #
-#   On a day you have class it will:
-#     * create today's two events the first time it runs, then
-#     * keep refreshing the train event once you are inside 35 minutes of
-#       the train, so the track number lands on it the moment the MTA posts
-#       it (measured: 19-20 minutes before departure).
-#
-#   Running often is deliberate. GitHub's free scheduler is not punctual --
-#   it can fire 5-30 minutes late -- so one precisely-timed run would often
-#   miss the window entirely. Many cheap attempts beat one exact one.
+# A once-a-day scheduler is useless for catching a track number that appears
+# 19 minutes before departure. It is perfectly adequate for refreshing a
+# timetable that changes a few times a year. So that is all this does now.
 
 on:
   schedule:
-    # Every 10 minutes, 10:00-22:59 UTC, Monday to Friday.
-    # Roughly 6am-7pm New York time in summer, 5am-6pm in winter.
-    # GitHub only understands UTC, so the script checks the real local time
-    # itself and does nothing if today is not actually a class day.
-    #
-    # Every 5 minutes, offset 2 past, 10:00-22:59 UTC, Monday to Friday.
-    # Roughly 6am-7pm New York time in summer, 5am-6pm in winter.
-    #
-    # Two deliberate choices:
-    #   * Not "*/5", because that fires on the hour, and GitHub's own docs
-    #     warn scheduled runs are most likely to be dropped when their load
-    #     peaks at the start of an hour. On 28 August a "*/10" schedule
-    #     produced zero runs in five and a half hours.
-    #   * Every 5 rather than every 10, because this repository is public and
-    #     public repositories get unlimited Actions minutes. The track window
-    #     is only 19 minutes wide, so more attempts means more chances.
-    - cron: "2-59/5 10-22 * * 1-5"
-
-  # Lets you press a button in the Actions tab to run it right now.
+    # Once a day, well off the hour. If GitHub drops a few, nothing breaks --
+    # the committed timetable stays valid for weeks.
+    - cron: "23 8 * * *"
   workflow_dispatch:
 
-# Never let two runs fight over the same calendar event.
+permissions:
+  contents: write
+
 concurrency:
-  group: commute
+  group: timetable
   cancel-in-progress: false
 
 jobs:
-  commute:
+  timetable:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v4
@@ -59,46 +42,18 @@ jobs:
       - name: Install the pieces it needs
         run: pip install --quiet -r requirements.txt
 
-      - name: Hand the robot account its key
-        env:
-          ROBOT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+      - name: Rebuild the daily timetable files
+        run: python build_timetable.py
+
+      - name: Commit them if anything changed
         run: |
-          if [ -z "$ROBOT_KEY" ]; then
-            echo "The GOOGLE_SERVICE_ACCOUNT repository secret is not set,"
-            echo "or it is not spelled exactly that way."
-            echo "See the README, section 'Making it run on its own'."
-            exit 1
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add timetable
+          if git diff --cached --quiet; then
+            echo "Timetable unchanged - nothing to commit."
+          else
+            git commit -m "Refresh Metro-North timetable"
+            git push
+            echo "Timetable updated."
           fi
-
-          # Write it out, stripping a leading byte-order mark if Notepad added
-          # one, since that alone is enough to make it unreadable as JSON.
-          printf '%s' "$ROBOT_KEY" | sed '1s/^\xEF\xBB\xBF//' > service_account.json
-
-          # Report the shape of it, never the contents.
-          echo "secret length : ${#ROBOT_KEY} characters"
-          echo "file written  : $(wc -c < service_account.json) bytes"
-          echo "starts with   : $(head -c 1 service_account.json)"
-
-          python -c "import json,sys; d=json.load(open('service_account.json')); \
-            print('valid JSON, key belongs to:', d.get('client_email')); \
-            sys.exit(0 if d.get('private_key') else 1)" \
-          || {
-            echo ""
-            echo "That secret is not a usable service account key."
-            echo "A good one is about 2,300 characters, starts with {, and ends with }."
-            echo "Open service_account.json in Notepad, press Ctrl+A then Ctrl+C,"
-            echo "and paste the whole thing over the existing secret value."
-            exit 1
-          }
-
-      - name: Work out today's train
-        env:
-          # Optional. Only needed if you ever move your calendar address and
-          # home address out of settings.txt. Empty is fine and ignored.
-          COMMUTE_CALENDAR_ID: ${{ secrets.COMMUTE_CALENDAR_ID }}
-          COMMUTE_HOME_ADDRESS: ${{ secrets.COMMUTE_HOME_ADDRESS }}
-        run: python commute.py auto
-
-      - name: Shred the key again
-        if: always()
-        run: rm -f service_account.json
